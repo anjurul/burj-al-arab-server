@@ -3,9 +3,10 @@ const cors = require('cors');
 const bodyParser =require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
 const admin = require('firebase-admin');
+require('dotenv').config();
 
 
-const uri = "mongodb+srv://burj-al-arab:Z8RW5xsetAPDj!s@cluster0.j1rag.mongodb.net/burjAlArab?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.j1rag.mongodb.net/burjAlArab?retryWrites=true&w=majority`;
 const port = 5000
 
 const app = express();
@@ -14,10 +15,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 
-var serviceAccount = require("./burj-al-arab-simple-auth-firebase-adminsdk-qq5f3-0d20c2f975.json");
+var serviceAccount = require("./configs/burj-al-arab-simple-auth-firebase-adminsdk-qq5f3-0d20c2f975.json");
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
-    databaseURL: 'https://burj-al-arab-simple-auth.firebaseio.com'
+    databaseURL: process.env.FIRE_DB
   });
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -41,22 +42,23 @@ client.connect(err => {
                 const tokenEmail = decodedToken.name;
                 const queryEmail = req.query.email;
                 console.log(tokenEmail, queryEmail);
-                if (tokenEmail == req.query.email) {
-                    bookings.find({email: req.query.email})
+                if (tokenEmail == queryEmail) {
+                    bookings.find({email: queryEmail})
                     .toArray((err, documents) => {
-                        res.send(documents);
+                        res.status(200).send(documents);
                     }) 
+                }
+                else{
+                    res.status(401).send('Un-authorized acces')
                 }
             })
             .catch((error) => {
-                // Handle error
-            });
-           
+                res.status(401).send('Un-authorized acces')
+            })
         }
-
-       
-
-       
+        else{
+            res.status(401).send('Un-authorized acces')
+        }
    })
 
 });
