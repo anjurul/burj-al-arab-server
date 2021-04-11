@@ -17,8 +17,8 @@ app.use(bodyParser.json());
 
 var serviceAccount = require("./configs/burj-al-arab-simple-auth-firebase-adminsdk-qq5f3-0d20c2f975.json");
 admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    databaseURL: process.env.FIRE_DB
+    credential: admin.credential.cert(serviceAccount),
+    
   });
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -33,37 +33,36 @@ client.connect(err => {
    })
 
    app.get('/bookings', (req, res) => {
-        const bearer = req.headers.authorization;
-        if (bearer && bearer.startsWith('Bearer ')) {
-            const idToken = bearer.split(' ')[1];
-           console.log({idToken});
-           admin.auth().verifyIdToken(idToken)
-            .then((decodedToken) => {
-                const tokenEmail = decodedToken.name;
+    const bearer = req.headers.authorization;
+    if (bearer && bearer.startsWith('Bearer ')) {
+        const idToken = bearer.split(' ')[1];
+        console.log({idToken});
+        admin.auth().verifyIdToken(idToken)
+            .then(function (decodedToken) {
+                const tokenEmail = decodedToken.email;
                 const queryEmail = req.query.email;
                 console.log(tokenEmail, queryEmail);
                 if (tokenEmail == queryEmail) {
-                    bookings.find({email: queryEmail})
-                    .toArray((err, documents) => {
-                        res.status(200).send(documents);
-                    }) 
+                    bookings.find({ email: queryEmail})
+                        .toArray((err, documents) => {
+                            res.status(200).send(documents);
+                        })
                 }
                 else{
-                    res.status(401).send('Un-authorized acces')
+                    res.status(401).send('un-authorized access')
                 }
-            })
-            .catch((error) => {
-                res.status(401).send('Un-authorized acces')
-            })
-        }
-        else{
-            res.status(401).send('Un-authorized acces')
-        }
-   })
+            }).catch(function (error) {
+                res.status(401).send('un-authorized access')
+            });
+    }
+    else{
+        res.status(401).send('un-authorized access')
+    }
+})
 
 });
 
 
 app.listen(port, () => {
-    console.log('starting server on port 5000');
+    console.log('server running at port 5000');
 });
