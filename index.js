@@ -64,5 +64,5 @@ client.connect(err => {
 
 
 app.listen(port, () => {
-    console.log('server running at port 5000');
+    console.log('server running on port 5000');
 });
